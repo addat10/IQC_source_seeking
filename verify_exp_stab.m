@@ -1,4 +1,4 @@
-function [status]=verify_exp_stab(G,M,alpha,tol)
+function [status,P]=verify_exp_stab(G,M,alpha,tol)
 status=false;
 [A,B,C,D]=ssdata(G);
 n=size(A,1);
