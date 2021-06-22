@@ -5,7 +5,8 @@ function [G]=define_vehicle_model()
 % a velocity tracking controller.
 
 %% Generic second order vehicle: mass with friction in 1D
-A=[0 1; 0 -1]; 
+c_damp=1;
+A=[0 1; 0 -c_damp]; 
 B=[0;1];
 C=[1 0];
 D=0;
