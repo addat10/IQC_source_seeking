@@ -15,6 +15,7 @@ bisect_tol=1e-2;
 %alpha_lims=[0,10];
 alpha_lims=[0.0001,10]; % alpha_best=0.2744
 [alpha_best,~]=bisection_exponent(Psi_GI,M,alpha_lims,cvx_tol,bisect_tol);
+% when using hinf desing, alpha_best=1e-4;
 [status,P]=verify_exp_stab(Psi_GI,M,alpha_best,cvx_tol*10);
 %% Numerically simulate the dynamics
 % Define the underlying field
@@ -24,7 +25,7 @@ k=1;
 x = linspace(-2*range,2*range);
 y = linspace(-2*range,2*range);
 [X,Y] = meshgrid(x,y);
-Z = (X-y_min(1)).^2+(Y-y_min(2)).^2;
+Z = 1*(X-y_min(1)).^2+2*(Y-y_min(2)).^2;
 grad_field=@(y) k*(y-y_min);
 
 
