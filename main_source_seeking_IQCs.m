@@ -5,12 +5,12 @@ clc
 % Select a Vehicle model from the following choices
 % 1. Mass with friction
 % 2. Linearized Quadrotor
-Veh_mod=2;
+Veh_mod=1;
 switch(Veh_mod)
     case 1
         % Mass with friction dynamics
         addpath(genpath('.\vehicles\mass_with_friction'))
-        dim=2;% spatial dimension (of positions and velocities)
+        dim=1;% spatial dimension (of positions and velocities)
         G_veh=define_G_mass_with_friction_wrapped(dim);
     case 2
         % Quadrotor dynamics
@@ -21,31 +21,43 @@ switch(Veh_mod)
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
-m=1;
-L=2;
+m=5;
+L=10;
 [Psi_GI,M]=define_ZF_multiplier(m,L,G_veh,dim);
 %alpha=0.3;
 cvx_tol=1e-6;
 bisect_tol=1e-2;
 %alpha_lims=[0,10];
 alpha_lims=[0.0001,10]; % alpha_best=0.2744
-[alpha_best,~]=bisection_exponent(Psi_GI,M,alpha_lims,cvx_tol,bisect_tol);
-% when using hinf desing, alpha_best=1e-4;
+
+% with usual Circle Criterion
+[alpha_best_CC,~]=bisection_exponent(Psi_GI,M,alpha_lims,cvx_tol,bisect_tol);
+alpha_best=alpha_best_CC;
+%when using hinf desing, alpha_best=1e-4;
 [status,P]=verify_exp_stab(Psi_GI,M,alpha_best,cvx_tol*10);
+if dim==2
+    % With full block circle criterion
+    [alpha_best_FBCC,~]=bisection_exponent_FBCC(Psi_GI,m,L,dim,alpha_lims,cvx_tol,bisect_tol);
+    [status,P]=verify_exp_stab_FBCC(Psi_GI,alpha_best,m,L,dim,cvx_tol);
+    alpha_best=max(alpha_best_CC,alpha_best_FBCC);
+end
+
+
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
 range=10;
 y_min=range*(-1+2*rand(dim,1));
-k=1;
-grad_field=@(y) k*(y-y_min);
-if dim==2
-    x = linspace(-2*range,2*range);
-    y = linspace(-2*range,2*range);
-    [X,Y] = meshgrid(x,y);
-    Z = 1*(X-y_min(1)).^2+2*(Y-y_min(2)).^2;
+switch(dim)
+    case 1
+        k=min(m,L);
+        grad_field=@(y) k*(y-y_min);
+    case 2
+        x = linspace(-2*range,2*range);
+        y = linspace(-2*range,2*range);
+        [X,Y] = meshgrid(x,y);
+        Z = 1*(X-y_min(1)).^2+2*(Y-y_min(2)).^2;
+        grad_field=@(y) [m,0;0,L]*(y-y_min);
 end
-
-
 sim_time=100;
 dt=0.001;
 time_steps=sim_time/dt;
@@ -58,17 +70,21 @@ switch(Veh_mod)
         [trajs]= simulate_source_seek(G_veh,x_ic,grad_field,time_steps,dt);        
     case 2
         % Quadrotor dynamics
+        x_ic=0;
         [trajs]= simulate_source_seek_quad(G_veh,grad_field,time_steps,dt);
 end
 %% Theoretical upper bound based on LMIs
 x_eqm=trajs.x(:,end);
 time=dt*(1:time_steps);
-x_ic=0;
 e_ub=exp(-alpha_best*time)*cond(P)*norm(x_ic-x_eqm)^2;
 %% Asymptotic Lyapunov Exponent for known quadratic fields
-A_cl=G_veh.A-G_veh.B*k*G_veh.C;
 % Compute the known theoretical lower and upper bounds
-
+switch(dim)
+    case 1
+        A_cl=G_veh.A-G_veh.B*k*G_veh.C;
+    case 2
+        A_cl=G_veh.A-G_veh.B*[m,0;0,L]*G_veh.C;
+end
 % Lower bound: a factor 2 appears as we are estimating norm squares.
 alpha_lb_eig_lr= -2*max(real(eig(A_cl))); 
 e_lb_eig_lr=exp(-alpha_lb_eig_lr*time)*norm(x_ic-x_eqm)^2;
