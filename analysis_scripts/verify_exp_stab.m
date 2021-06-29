@@ -23,6 +23,7 @@ LMI=L1+L2;
 minimize 1; 
 subject to:
 P >= tol*eye(n);
+P <= 50*tol*eye(n);
 LMI<=0;
 lambda>=tol;
 cvx_end 
