@@ -1,11 +1,26 @@
 close all
 clear
 clc
-%% System Dynamics
-dim=2; % spatial dimension (of positions and velocities)
-%G_veh=define_vehicle_model(dim);
-G_veh=define_G_quad_wrapped(dim);
+%% Vehicle Dynamics
+% Select a Vehicle model from the following choices
+% 1. Mass with friction
+% 2. Linearized Quadrotor
+Veh_mod=2;
+switch(Veh_mod)
+    case 1
+        % Mass with friction dynamics
+        addpath(genpath('.\vehicles\mass_with_friction'))
+        dim=2;% spatial dimension (of positions and velocities)
+        G_veh=define_G_mass_with_friction_wrapped(dim);
+    case 2
+        % Quadrotor dynamics
+        addpath(genpath('.\vehicles\quadrotor'))
+        dim=2;% spatial dimension (of positions and velocities)
+        % Current implementation only supports dim=2 for quadrotors
+        G_veh=define_G_quad_wrapped(dim);        
+end
 %% Verify exponential stability: Analysis
+addpath('.\analysis_scripts')
 m=1;
 L=2;
 [Psi_GI,M]=define_ZF_multiplier(m,L,G_veh,dim);
@@ -18,26 +33,33 @@ alpha_lims=[0.0001,10]; % alpha_best=0.2744
 % when using hinf desing, alpha_best=1e-4;
 [status,P]=verify_exp_stab(Psi_GI,M,alpha_best,cvx_tol*10);
 %% Numerically simulate the dynamics
-% Define the underlying field
+% Define the underlying field for dim=2
 range=10;
 y_min=range*(-1+2*rand(dim,1));
 k=1;
-x = linspace(-2*range,2*range);
-y = linspace(-2*range,2*range);
-[X,Y] = meshgrid(x,y);
-Z = 1*(X-y_min(1)).^2+2*(Y-y_min(2)).^2;
 grad_field=@(y) k*(y-y_min);
+if dim==2
+    x = linspace(-2*range,2*range);
+    y = linspace(-2*range,2*range);
+    [X,Y] = meshgrid(x,y);
+    Z = 1*(X-y_min(1)).^2+2*(Y-y_min(2)).^2;
+end
 
 
 sim_time=100;
 dt=0.001;
 time_steps=sim_time/dt;
-%pos_ic=10*(-1+2*rand(dim,1));
-%vel_ic=2*(-1+2*rand(dim,1));
-%x_ic=[pos_ic;vel_ic];
-%[trajs]= simulate_source_seek(G_veh,x_ic,grad_field,time_steps,dt);
-[trajs]= simulate_source_seek_quad(G_veh,grad_field,time_steps,dt);
-
+switch(Veh_mod)
+    case 1
+        % Mass with friction dynamics
+        pos_ic=10*(-1+2*rand(dim,1));
+        vel_ic=2*(-1+2*rand(dim,1));
+        x_ic=[pos_ic;vel_ic];
+        [trajs]= simulate_source_seek(G_veh,x_ic,grad_field,time_steps,dt);        
+    case 2
+        % Quadrotor dynamics
+        [trajs]= simulate_source_seek_quad(G_veh,grad_field,time_steps,dt);
+end
 %% Theoretical upper bound based on LMIs
 x_eqm=trajs.x(:,end);
 time=dt*(1:time_steps);

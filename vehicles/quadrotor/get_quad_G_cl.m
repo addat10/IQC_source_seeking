@@ -1,7 +1,7 @@
 function G_quad_wrapped=get_quad_G_cl()
 % This function defines the quadrotor model, designs a tracking controller
 % and returns wrapped up closed loop of the quadrotor that takes as input
-% position and velocities and outputs quadrotor positions.
+% positions and velocities and outputs quadrotor positions.
 % -------------------------------------------------------------------------
     %% Define the model of the quadrocopter
     g = 9.81;   % Gravity constant

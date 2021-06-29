@@ -1,13 +1,13 @@
 function G_quad_wrapped = lqr_design_with_static_FF(P,ref_dim)
 % This function designs an LQR controller
 
-    [A,B,C,D]=ssdata(P);   
+    [A,B,~,~]=ssdata(P);   
     %LQR design    
     [nx,nu]=size(B);    
     Q=eye(nx);
     R=0.01*eye(nu);
     N=zeros(nx,nu);    
-    [K,S,lambdas] = lqr(P,Q,R);
+    [K,~,~] = lqr(P,Q,R);
     A_cl=(A-B*K);
     %% Obtain feedforward gain
     % z_des and zdot_des are fixed to zero at the moment
