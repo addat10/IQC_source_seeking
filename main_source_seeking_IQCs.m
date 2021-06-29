@@ -21,8 +21,8 @@ switch(Veh_mod)
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
-m=5;
-L=10;
+m=1;
+L=2;
 [Psi_GI,M]=define_ZF_multiplier(m,L,G_veh,dim);
 %alpha=0.3;
 cvx_tol=1e-6;
@@ -35,13 +35,18 @@ alpha_lims=[0.0001,10]; % alpha_best=0.2744
 alpha_best=alpha_best_CC;
 %when using hinf desing, alpha_best=1e-4;
 [status,P]=verify_exp_stab(Psi_GI,M,alpha_best,cvx_tol*10);
+
 if dim==2
     % With full block circle criterion
     [alpha_best_FBCC,~]=bisection_exponent_FBCC(Psi_GI,m,L,dim,alpha_lims,cvx_tol,bisect_tol);
     [status,P]=verify_exp_stab_FBCC(Psi_GI,alpha_best,m,L,dim,cvx_tol);
-    alpha_best=max(alpha_best_CC,alpha_best_FBCC);
+    alpha_best=max(alpha_best,alpha_best_FBCC);
 end
-
+%%
+% With Zames Falb Multiplier
+[alpha_best_ZF,~]=bisection_exponent_ZF(G_veh,m,L,dim,alpha_lims,cvx_tol,bisect_tol);
+alpha_best=max(alpha_best,alpha_best_ZF);
+[status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,dim,cvx_tol);
 
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
