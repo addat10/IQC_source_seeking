@@ -6,26 +6,35 @@ function [status,P]=verify_exp_stab_ZF(G,alpha,sec_1,sec_2,dim,tol)
     status=false;
     [A_G,B_G,C_G,D_G]=ssdata(G);
     nx=size(A_G,1);
-    [ny,nu]=size(D_G);
+    [~,nu]=size(D_G);
     
-    Pi_ab=[sec_1,-1;-sec_2, 1];
+    %Pi_ab=[sec_1,-1;-sec_2, 1];
     
     % Define the tall psi basis. Stable causal filter
-    A_psi=-1;
+    a=1;
+    A_psi=-a;
     B_psi=1;
-    C_psi=1;
-    D_psi=0;
+    C_psi=a;
     
+    
+%     % Define the augmented 
+%     A_PSI=A_psi;
+%     B_PSI=[0,B_psi]*Pi_ab;
+%     C_PSI=[0;0;C_psi];
+%     D_PSI=[eye(2);0,D_psi]*Pi_ab;
+
     % Define the augmented 
     A_PSI=A_psi;
-    B_PSI=[0,B_psi]*Pi_ab;
-    C_PSI=[0;0;C_psi];
-    D_PSI=[eye(2);0,D_psi]*Pi_ab;
+    B_PSI=B_psi*[sec_2,-1];
+    C_PSI=[-C_psi;0];
+    D_PSI=[sec_2,-1;-sec_1, 1];
     
     PSI=ss(A_PSI,B_PSI,C_PSI,D_PSI);
     
-    g=1;c=1;
-    M=[0,g,-c;g,0,0;-c',0,0];
+%     g=1;c=1;
+%     M=[0,g,-c;g,0,0;-c',0,0];
+
+    M=[0,1;1,0];
     
     
     % Build Psi*[G;I] with Dynamic Multiplier
