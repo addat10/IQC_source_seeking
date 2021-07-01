@@ -10,7 +10,7 @@ switch(Veh_mod)
     case 1
         % Mass with friction dynamics
         addpath(genpath('.\vehicles\mass_with_friction'))
-        dim=1;% spatial dimension (of positions and velocities)
+        dim=2;% spatial dimension (of positions and velocities)
         G_veh=define_G_mass_with_friction_wrapped(dim);
     case 2
         % Quadrotor dynamics
@@ -23,31 +23,42 @@ end
 addpath('.\analysis_scripts')
 m=1;
 L=2;
-[Psi_GI,M]=define_ZF_multiplier(m,L,G_veh,dim);
-%alpha=0.3;
 cvx_tol=1e-6;
 bisect_tol=1e-2;
-%alpha_lims=[0,10];
-alpha_lims=[0.0001,10]; % alpha_best=0.2744
+alpha_lims=[0.01,10]; 
+cond_tol=100;
+alpha_best=0;
 
-% with usual Circle Criterion
-[alpha_best_CC,~]=bisection_exponent(Psi_GI,M,alpha_lims,cvx_tol,bisect_tol);
-alpha_best=alpha_best_CC;
-%when using hinf desing, alpha_best=1e-4;
-[status,P]=verify_exp_stab(Psi_GI,M,alpha_best,cvx_tol*10);
+%% Multiplier class
+% Select a multiplier class from the following choices
+% 1. Circle criterion
+% 2. Full block circle criterion
+% 3. Zames Falb multipliers
+
+% With Circle Criterion (Static Multiplier)
+multiplier_flag=1;
+%[alpha_best_CC,~]=bisection_exponent_CC(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol);
+[alpha_best_CC,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+alpha_best=max(alpha_best,alpha_best_CC);
+[status_CC,P_CC]=verify_exp_stab_CC(G_veh,alpha_best,m,L,cond_tol,cvx_tol*10);
 
 if dim==2
     % With full block circle criterion
-    [alpha_best_FBCC,~]=bisection_exponent_FBCC(Psi_GI,m,L,dim,alpha_lims,cvx_tol,bisect_tol);
-    [status,P]=verify_exp_stab_FBCC(Psi_GI,alpha_best,m,L,dim,cvx_tol);
+    multiplier_flag=2;
+    %[alpha_best_FBCC,~]=bisection_exponent_FBCC(G_veh,m,L,cond_tol,alpha_lims,cvx_tol,bisect_tol);
+    [alpha_best_FBCC,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+    [status_FBCC,P_FBCC]=verify_exp_stab_FBCC(G_veh,alpha_best_FBCC,m,L,cond_tol,cvx_tol*10);
     alpha_best=max(alpha_best,alpha_best_FBCC);
 end
-%%
-% With Zames Falb Multiplier
-[alpha_best_ZF,~]=bisection_exponent_ZF(G_veh,m,L,dim,alpha_lims,cvx_tol,bisect_tol);
-alpha_best=max(alpha_best,alpha_best_ZF);
-[status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,dim,cvx_tol);
 
+% With Zames Falb Multiplier
+multiplier_flag=3;
+%[alpha_best_ZF,~]=bisection_exponent_ZF(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol);
+[alpha_best_ZF,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+alpha_best=max(alpha_best,alpha_best_ZF);
+[status_ZF,P_ZF]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,cond_tol,cvx_tol*10);
+
+P=P_ZF;
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
 range=10;
@@ -81,7 +92,9 @@ end
 %% Theoretical upper bound based on LMIs
 x_eqm=trajs.x(:,end);
 time=dt*(1:time_steps);
-e_ub=exp(-alpha_best*time)*cond(P)*norm(x_ic-x_eqm)^2;
+e_ub_CC=exp(-alpha_best_CC*time)*cond(P_CC)*norm(x_ic-x_eqm)^2;
+e_ub_FBCC=exp(-alpha_best_FBCC*time)*cond(P_FBCC)*norm(x_ic-x_eqm)^2;
+e_ub_ZF=exp(-alpha_best_ZF*time)*cond(P_ZF)*norm(x_ic-x_eqm)^2;
 %% Asymptotic Lyapunov Exponent for known quadratic fields
 % Compute the known theoretical lower and upper bounds
 switch(dim)
@@ -123,9 +136,11 @@ e_norms=sum(e.^2);
 figure()
 plot(time,e_norms)
 hold on
-plot(time,e_ub)
+plot(time,e_ub_CC)
+plot(time,e_ub_FBCC)
+plot(time,e_ub_ZF)
 
-legend('e norm','theoretical bound with LMIs')
+legend('e norm','CC','FBCC','ZF')
 xlabel('time')
 ylabel('pos error')
 
@@ -133,11 +148,13 @@ ylabel('pos error')
 figure()
 plot(time,log(e_norms))
 hold on
-plot(time,log(e_ub))
+plot(time,log(e_ub_CC))
+plot(time,log(e_ub_FBCC))
+plot(time,log(e_ub_ZF))
 plot(time,log(e_lb_eig_lr))
 plot(time,log(e_ub_eig_sym_A))
 ylim([-10,10])
-legend('e norm','theoretical bound with LMIs','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
+legend('e norm','CC','FBCC','ZF','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
 xlabel('time')
 ylabel('ln(pos error)')
 

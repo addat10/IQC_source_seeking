@@ -5,7 +5,7 @@ function [G]=define_G_mass_with_friction_wrapped(dim)
 % a velocity tracking controller.
 
 %% Generic second order vehicle: mass with friction in 1D
-c_damp=1;
+c_damp=2;
 A=[0 1; 0 -c_damp]; 
 B=[0;1];
 C=[1 0];
