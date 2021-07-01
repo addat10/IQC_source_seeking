@@ -23,8 +23,8 @@ LMI=L1+L2;
 minimize 1; 
 subject to:
 P >= tol*eye(n);
-P <= 50*tol*eye(n);
-LMI<=0;
+P <= 100*tol*eye(n);
+LMI<=-tol*eye(n+m);
 lambda>=tol;
 cvx_end 
 if strcmp('Solved',cvx_status)
