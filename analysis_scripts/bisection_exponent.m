@@ -9,8 +9,10 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
             [status,~]=verify_exp_stab_CC(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
         case 2  % Full block circle criterion
             [status,~]=verify_exp_stab_FBCC(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
-        case 3  % Zames Falb Multipliers
+        case 3  % Zames Falb Multipliers with CC
             [status,P]=verify_exp_stab_ZF(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
+        case 4 % Zames Falb Multipliers with FBCC
+            [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
     end
 
     if ~status
@@ -23,8 +25,10 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
             [status,P]=verify_exp_stab_CC(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
         case 2  % Full block circle criterion
             [status,P]=verify_exp_stab_FBCC(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
-        case 3  % Zames Falb Multipliers
+        case 3  % Zames Falb Multipliers with CC
             [status,P]=verify_exp_stab_ZF(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
+        case 4 % Zames Falb Multipliers with FBCC
+            [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
     end    
     if status        
         alpha_best=alpha_lims(2); % Return alpha_high if feasible
@@ -34,12 +38,14 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
     while alpha_lims(2)-alpha_lims(1)>bisect_tol
         alpha_mid=mean(alpha_lims);           
         switch multiplier_flag
-                case 1  % Circle Criterion
-                    [status,P]=verify_exp_stab_CC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
-                case 2  % Full block circle criterion
-                    [status,P]=verify_exp_stab_FBCC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
-                case 3  % Zames Falb Multipliers
-                    [status,P]=verify_exp_stab_ZF(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
+            case 1  % Circle Criterion
+                [status,P]=verify_exp_stab_CC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
+            case 2  % Full block circle criterion
+                [status,P]=verify_exp_stab_FBCC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
+            case 3  % Zames Falb Multipliers
+                [status,P]=verify_exp_stab_ZF(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
+            case 4 % Zames Falb Multipliers with FBCC
+                [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
         end            
         if status
             alpha_lims(1)=alpha_mid;

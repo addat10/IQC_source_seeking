@@ -7,8 +7,10 @@ if dim~=2
     error('Currently just works with dimension=2')
 end
 c_damp=5;
-A=kron([0 1; 0 -c_damp],eye(dim)); 
-B=kron([0;1],eye(dim));
+inv_mass=(1/0.640);
+step_size=2;
+A=kron([0 1; 0 -c_damp*inv_mass],eye(dim)); 
+B=kron([0;1*inv_mass*step_size],eye(dim));
 C=eye(2*dim);
 D=zeros(2*dim,dim);
 G_double_int=ss(A,B,C,D);

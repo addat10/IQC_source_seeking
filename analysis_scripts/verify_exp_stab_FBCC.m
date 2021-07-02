@@ -12,9 +12,9 @@ function [status,X]=verify_exp_stab_FBCC(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
     % Build Psi*[G;I] with Dynamic Multiplier
     Psi_GI=ss(A,B,[C;zeros(nu,nx)],[D;eye(nu)]);
     
-    [status,X]=verify_exp_stab_ZF(Psi_GI,alpha,sec_1,sec_2,cond_tol,tol);
+    [status,X]=verify_exp_stab_FBCC_LMI(Psi_GI,alpha,sec_1,sec_2,cond_tol,tol);
 end
-function [status,X]=verify_exp_stab_ZF(Psi_GI,alpha,sec_1,sec_2,cond_tol,tol)
+function [status,X]=verify_exp_stab_FBCC_LMI(Psi_GI,alpha,sec_1,sec_2,cond_tol,tol)
 % This function runs the exp-stab analysis KYP Lemma LMI
     status=false;
     [A,B,C,D]=ssdata(Psi_GI);
