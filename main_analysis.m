@@ -28,6 +28,7 @@ cvx_tol=1e-6;
 bisect_tol=1e-2;
 alpha_lims=[0.01,10]; 
 cond_tol=100;
+alpha_lims=[0.0001,10];
 
 % Multiplier class
 % Select a multiplier class from the following choices
