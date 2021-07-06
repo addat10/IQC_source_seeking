@@ -8,7 +8,7 @@ if dim~=2
 end
 c_damp=5;
 inv_mass=(1/0.640);
-step_size=2;
+step_size=0.2;
 A=kron([0 1; 0 -c_damp*inv_mass],eye(dim)); 
 B=kron([0;1*inv_mass*step_size],eye(dim));
 C=eye(2*dim);

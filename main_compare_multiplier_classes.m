@@ -161,7 +161,7 @@ plot(time,log(e_ub_ZF_FBCC))
 plot(time,log(e_lb_eig_lr))
 plot(time,log(e_ub_eig_sym_A))
 ylim([-50,50])
-legend('e norm','CC','FBCC','ZF','ZF_FBCC','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
+legend('e norm','CC','FBCC','ZF','ZF FBCC','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
 xlabel('time')
 ylabel('ln(pos error)')
 

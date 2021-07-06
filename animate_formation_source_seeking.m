@@ -11,7 +11,7 @@ function []=animate_formation_source_seeking(traj,time_steps,L,X,Y,Z)
                     hold on
                     for i=1:n
                         xy=[(i-1)*2+1;(i-1)*2+2];
-                        plot(traj(xy(1),time),traj(xy(2),time),'x')
+                        plot(traj(xy(1),time),traj(xy(2),time),'o')
                     end
                     hold off
                     pause(0.1)

@@ -21,7 +21,7 @@ switch(Veh_mod)
         G_veh=define_G_quad_wrapped(dim);        
 end
 %% Network Properties
-n=4; % Number of agents
+n=3; % Number of agents
 link_prob=0.8; topo='rand';
 A=gen_topology(n,link_prob,topo);
 D=A*ones(n,1);
@@ -31,7 +31,7 @@ eig_Ls=eig(Lap);
 range=10;
 y_min=range*(-1+2*rand(dim,1));
 alpha_bar=1; % eig_Ls(2)/4 maximizes the lower bound on the grounded Lap
-beta_bar=2;
+beta_bar=1.5;
 switch(dim)
     case 1
         k=min(alpha_bar,beta_bar);
