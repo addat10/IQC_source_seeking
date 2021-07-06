@@ -18,7 +18,7 @@ function [status,P]=verify_exp_stab_ZF(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
     % Impulse response must be non-negative at all times
     % Must be stable
     % Impulse response must have an L1 norm of less than 1
-    a=-1; % Pole of the filter H
+    a=-5; % Pole of the filter H
     A_h=a;
     B_h=1;
     C_h=-a; % Makes sure that the L1 norm of the impulse response is 1
