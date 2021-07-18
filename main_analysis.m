@@ -5,13 +5,14 @@ clc
 % Select a Vehicle model from the following choices
 % 1. Mass with friction
 % 2. Linearized Quadrotor
-Veh_mod=2;
+Veh_mod=1;
 switch(Veh_mod)
     case 1
         % Mass with friction dynamics
         addpath(genpath('.\vehicles\mass_with_friction'))
-        c_damp=1;mass=1;step_size=1;
-        dim=2;% spatial dimension (of positions and velocities)
+        rng(1)
+        c_damp=1+rand;mass=1+rand;step_size=5;
+        dim=1;% spatial dimension (of positions and velocities)
         G_veh=define_G_mass_with_friction_wrapped(dim,c_damp,mass,step_size);
     case 2
         % Quadrotor dynamics
@@ -22,8 +23,8 @@ switch(Veh_mod)
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
-m=0.1;
-L=1;
+m=1;
+L=2;
 cvx_tol=1e-6;
 bisect_tol=1e-2;
 alpha_lims=[1e-6,10]; 
@@ -34,9 +35,12 @@ cond_tol=100000000;
 % 1. Circle criterion
 % 2. Full block circle criterion
 % 3. Zames Falb multipliers
-multiplier_flag=3;
-[alpha_best,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+multiplier_flag=5;
+%[alpha_best,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+alpha_best=0.15;
 [status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
+alpha_best=0.11;
+[status,P]=verify_exp_stab_ZF_NC_delete(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
 range=10;

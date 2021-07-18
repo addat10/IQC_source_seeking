@@ -1,4 +1,4 @@
-function [status,P]=verify_exp_stab_ZF(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
+function [status,P]=verify_exp_stab_ZF_NC_delete(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
 % This function runs the analysis LMI with cvx and returns the status and
 % the storage function matrix P.
     
@@ -18,18 +18,18 @@ function [status,P]=verify_exp_stab_ZF(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
     % Impulse response must be non-negative at all times
     % Must be stable
     % Impulse response must have an L1 norm of less than 1
-    a=-1; % Pole of the filter H
+    a=-2; % Pole of the filter H
     A_h=a;
     B_h=1;
     C_h=-a; % Makes sure that the L1 norm of the impulse response is 1
     
     
     % Define the augmented ny must be equal to nu
-    A_PSI=(A_h-2*alpha)*eye(n_delta); % For the alpha IQC condition
-    B_PSI=B_h*[sec_2*eye(n_delta),-1*eye(n_delta)];
-    C_PSI=[-C_h*eye(n_delta);zeros(n_delta);zeros(2*n_delta,n_delta)];
-    D_PSI=[ sec_2*eye(n_delta),-1*eye(n_delta);...
-            -sec_1*eye(n_delta), 1*eye(n_delta);...
+    A_PSI=(A_h)*eye(n_delta); % For the alpha IQC condition
+    B_PSI=B_h*[-sec_1*eye(n_delta),1*eye(n_delta)];
+    C_PSI=[C_h*eye(n_delta);zeros(n_delta);zeros(2*n_delta,n_delta)];
+    D_PSI=[ -sec_1*eye(n_delta),1*eye(n_delta);...
+            sec_2*eye(n_delta), -1*eye(n_delta);...
             sec_2*eye(n_delta),-1*eye(n_delta);...
             -sec_1*eye(n_delta), 1*eye(n_delta)];
     

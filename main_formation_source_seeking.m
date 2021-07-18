@@ -21,8 +21,8 @@ switch(Veh_mod)
         G_veh=define_G_quad_wrapped(dim);        
 end
 %% Network Properties
-n=3; % Number of agents
-link_prob=0.8; topo='rand';
+n=5; % Number of agents
+link_prob=0.5; topo='rand';
 A=gen_topology(n,link_prob,topo);
 D=A*ones(n,1);
 Lap=diag(D)-A;

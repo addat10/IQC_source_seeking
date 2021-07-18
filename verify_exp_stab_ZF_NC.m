@@ -1,4 +1,4 @@
-function [status,P]=verify_exp_stab_ZF(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
+function [status,P]=verify_exp_stab_ZF_NC(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
 % This function runs the analysis LMI with cvx and returns the status and
 % the storage function matrix P.
     
@@ -23,28 +23,41 @@ function [status,P]=verify_exp_stab_ZF(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
     B_h=1;
     C_h=-a; % Makes sure that the L1 norm of the impulse response is 1
     
+    caus=0; % set to zero if non-causal multipliers are not to be considered
+    anti_caus=1;
     
     % Define the augmented ny must be equal to nu
-    A_PSI=(A_h-2*alpha)*eye(n_delta); % For the alpha IQC condition
-    B_PSI=B_h*[sec_2*eye(n_delta),-1*eye(n_delta)];
-    C_PSI=[-C_h*eye(n_delta);zeros(n_delta);zeros(2*n_delta,n_delta)];
+    A_PSI=[(A_h-2*alpha)*eye(n_delta),zeros(n_delta);...
+            zeros(n_delta),(A_h)*eye(n_delta)]; % For the alpha IQC condition
+    B_PSI=[(~anti_caus)*B_h*[sec_2*eye(n_delta),-1*eye(n_delta)];...
+           (~caus)*B_h*[-sec_1*eye(n_delta),eye(n_delta)]];
+    C_PSI=[-(~anti_caus)*C_h*eye(n_delta),zeros(n_delta);...
+           zeros(n_delta),-(~caus)*C_h*eye(n_delta);...
+           zeros(2*n_delta,2*n_delta);
+           zeros(2*n_delta,2*n_delta)]; % The last block is for the circle criterion
+       
     D_PSI=[ sec_2*eye(n_delta),-1*eye(n_delta);...
+            zeros(n_delta,2*n_delta);...
             -sec_1*eye(n_delta), 1*eye(n_delta);...
+            sec_2*eye(n_delta),-1*eye(n_delta);...
             sec_2*eye(n_delta),-1*eye(n_delta);...
             -sec_1*eye(n_delta), 1*eye(n_delta)];
     
     PSI=ss(A_PSI,B_PSI,C_PSI,D_PSI);
-    M=[ zeros(n_delta),eye(n_delta);...
-        eye(n_delta),zeros(n_delta)];  
+    M_CC=[ zeros(n_delta),eye(n_delta);...
+        eye(n_delta),zeros(n_delta)]; 
+    M_ZF=[ zeros(2*n_delta),eye(2*n_delta);...
+        eye(2*n_delta),zeros(2*n_delta)];
+    
     
     % Build Psi*[G;I] with Dynamic Multiplier
     PSI_GI=PSI*ss(A_G,B_G,[C_G;zeros(n_delta,nx)],[D_G;eye(n_delta)]);
     
     % Run the exponenetial analysis LMI
-    [status,P]=verify_exp_stab_alpha_ZF_LMI(PSI_GI,M,alpha,cond_tol,tol);
+    [status,P]=verify_exp_stab_alpha_ZF_NC_LMI(PSI_GI,M_CC,M_ZF,alpha,cond_tol,tol);
     
 end
-function [status,P]=verify_exp_stab_alpha_ZF_LMI(PSI_GI,M,alpha,cond_tol,tol)
+function [status,P]=verify_exp_stab_alpha_ZF_NC_LMI(PSI_GI,M_CC,M_ZF,alpha,cond_tol,tol)
  % This function runs the exp-stab analysis KYP Lemma LMI
     status=false;
     % Get state-space matrics
@@ -59,7 +72,8 @@ function [status,P]=verify_exp_stab_alpha_ZF_LMI(PSI_GI,M,alpha,cond_tol,tol)
 
     L1=[A'*P + P*A + 2*alpha*P,    P*B;
         B'*P,                      zeros(nu)];
-    L2=[C';D']*[lambda_1*M,zeros(2*nu);zeros(2*nu),lambda_2*M]*[C,D];
+    L2=[C';D']*[lambda_1*M_ZF,zeros(size(M_ZF,1),2*nu);...
+        zeros(2*nu,size(M_ZF,2)),lambda_2*M_CC]*[C,D];
 
     LMI=L1+L2;
 

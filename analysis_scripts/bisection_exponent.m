@@ -13,6 +13,8 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
             [status,P]=verify_exp_stab_ZF(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
         case 4 % Zames Falb Multipliers with FBCC
             [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
+        case 5 % Zames Falb multipliers with non-causal multilpiers
+            [status,P]=verify_exp_stab_ZF_NC(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
     end
 
     if ~status
@@ -29,6 +31,8 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
             [status,P]=verify_exp_stab_ZF(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
         case 4 % Zames Falb Multipliers with FBCC
             [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
+        case 5
+            [status,P]=verify_exp_stab_ZF_NC(G_veh,alpha_lims(2),m,L,cond_tol,cvx_tol);
     end    
     if status        
         alpha_best=alpha_lims(2); % Return alpha_high if feasible
@@ -46,6 +50,8 @@ function [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol
                 [status,P]=verify_exp_stab_ZF(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
             case 4 % Zames Falb Multipliers with FBCC
                 [status,P]=verify_exp_stab_ZF_FBCC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
+            case 5
+                [status,P]=verify_exp_stab_ZF_NC(G_veh,alpha_mid,m,L,cond_tol,cvx_tol);
         end            
         if status
             alpha_lims(1)=alpha_mid;
