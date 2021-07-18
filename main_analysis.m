@@ -5,7 +5,7 @@ clc
 % Select a Vehicle model from the following choices
 % 1. Mass with friction
 % 2. Linearized Quadrotor
-Veh_mod=1;
+Veh_mod=3;
 switch(Veh_mod)
     case 1
         % Mass with friction dynamics
@@ -19,12 +19,16 @@ switch(Veh_mod)
         addpath(genpath('.\vehicles\quadrotor'))
         dim=2;% spatial dimension (of positions and velocities)
         % Current implementation only supports dim=2 for quadrotors
-        G_veh=define_G_quad_wrapped(dim);        
+        G_veh=define_G_quad_wrapped(dim);  
+    case 3
+        % Example from Scherer, Weiland LMI notes (not a vehicle)
+        a=1.8; % Choose between 0.2 to 2          
+        G_veh=ss(tf([1,-a,0],[1,1,2,1]));
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
-m=1;
-L=2;
+m=0;
+L=0.68;
 cvx_tol=1e-6;
 bisect_tol=1e-2;
 alpha_lims=[1e-6,10]; 
@@ -35,12 +39,12 @@ cond_tol=100000000;
 % 1. Circle criterion
 % 2. Full block circle criterion
 % 3. Zames Falb multipliers
-multiplier_flag=5;
-%[alpha_best,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
-alpha_best=0.15;
-[status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
-alpha_best=0.11;
-[status,P]=verify_exp_stab_ZF_NC_delete(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
+multiplier_flag=3;
+[alpha_best,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+%alpha_best=0;
+%[status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
+%alpha_best=1e-6;
+%[status,P]=verify_exp_stab_ZF_NC_delete(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
 range=10;
