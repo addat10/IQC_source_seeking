@@ -10,7 +10,7 @@ switch(Veh_mod)
     case 1
         % Mass with friction dynamics
         addpath(genpath('.\vehicles\mass_with_friction'))
-        c_damp=2;mass=1;step_size=1;
+        c_damp=5;mass=1;step_size=0.1;
         dim=2;% spatial dimension (of positions and velocities)
         G_veh=define_G_mass_with_friction_wrapped(dim,c_damp,mass,step_size);
     case 2
@@ -22,6 +22,7 @@ switch(Veh_mod)
 end
 %% Network Properties
 n=5; % Number of agents
+addpath(genpath('.\flocking_scripts\'))
 link_prob=0.5; topo='rand';
 A=gen_topology(n,link_prob,topo);
 D=A*ones(n,1);
@@ -31,7 +32,7 @@ eig_Ls=eig(Lap);
 range=10;
 y_min=range*(-1+2*rand(dim,1));
 alpha_bar=1; % eig_Ls(2)/4 maximizes the lower bound on the grounded Lap
-beta_bar=1.5;
+beta_bar=1.1;
 switch(dim)
     case 1
         k=min(alpha_bar,beta_bar);
@@ -61,7 +62,7 @@ cond_tol=100;
 % 1. Circle criterion
 % 2. Full block circle criterion
 % 3. Zames Falb multipliers
-multiplier_flag=3;
+multiplier_flag=1;
 [alpha_best,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
 [status,P]=verify_exp_stab_ZF(G_veh,alpha_lims(1),m,L,cond_tol,cvx_tol);
 %% Numerically simulate the dynamics

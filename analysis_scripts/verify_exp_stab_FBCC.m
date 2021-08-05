@@ -1,7 +1,7 @@
 function [status,X]=verify_exp_stab_FBCC(G_veh,alpha,sec_1,sec_2,cond_tol,tol)
 % This function runs the analysis LMI with cvx and returns the status and
 % the storage function matrix P. 
-       
+  
     [A,B,C,D]=ssdata(G_veh);
     [~,nu]=size(D);
     nx=size(A,1);
@@ -20,7 +20,9 @@ function [status,X]=verify_exp_stab_FBCC_LMI(Psi_GI,alpha,sec_1,sec_2,cond_tol,t
     [A,B,C,D]=ssdata(Psi_GI);
     n=size(A,1);
     dim=size(B,2);
-    
+    if dim<2
+        error('FBCC can be used only if dim of uncertainty is more than 1')
+    end
     cvx_begin sdp 
     cvx_precision high    
     variable X(n,n) symmetric
@@ -30,10 +32,9 @@ function [status,X]=verify_exp_stab_FBCC_LMI(Psi_GI,alpha,sec_1,sec_2,cond_tol,t
 
     % Multiplier class
     % Create the multiplier class
-    d=[ sec_1,sec_1;
-        sec_1,sec_2;
-        sec_2,sec_1;
-        sec_2,sec_2];
+    dec=0:1:(2^dim)-1;
+    vec=dec2bin(dec)-'0';
+    d=sec_1*(~vec)+sec_2*(vec);
     E=@(delta)[eye(dim);diag(delta)];
     
     C1=E(d(1,:))'*[Q,S;S',R]*E(d(1,:));
