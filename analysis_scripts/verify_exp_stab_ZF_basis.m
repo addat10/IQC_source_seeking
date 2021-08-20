@@ -16,14 +16,14 @@ function [status,P]=verify_exp_stab_ZF_basis(G_veh,alpha,sec_1,sec_2,odd_flag,ca
     
     % Define the multiplier psi as in Scherer and Veenman  
     if n_psi>=1
-        A_psi=rho*diag(ones(1,n_psi))+diag(ones(1,n_psi-1),-1);
-        B_psi=[1;zeros(n_psi-1,1)];
-        C_psi=[zeros(1,n_psi);eye(n_psi)];
-        D_psi=[1;zeros(n_psi,1)];
-        psi=ss(kron(A_psi,eye(nu)),kron(B_psi,eye(nu)),kron(C_psi,eye(nu)),kron(D_psi,eye(nu)));
+        A_psi_alpha=(rho-2*alpha)*diag(ones(1,n_psi))+diag(ones(1,n_psi-1),-1);
+        B_psi_alpha=[1;zeros(n_psi-1,1)];
+        C_psi_alpha=[zeros(1,n_psi);eye(n_psi)];
+        D_psi_alpha=[1;zeros(n_psi,1)];
+        psi_alpha=ss(kron(A_psi_alpha,eye(nu)),kron(B_psi_alpha,eye(nu)),kron(C_psi_alpha,eye(nu)),kron(D_psi_alpha,eye(nu)));
     else
-        D_psi=[1;zeros(n_psi,1)];
-        psi=ss([],[],[],kron(D_psi,eye(nu)));
+        D_psi_alpha=[1;zeros(n_psi,1)];
+        psi_alpha=ss([],[],[],kron(D_psi_alpha,eye(nu)));
     end
     
 
@@ -41,18 +41,21 @@ function [status,P]=verify_exp_stab_ZF_basis(G_veh,alpha,sec_1,sec_2,odd_flag,ca
     B_in=[  -sec_1*eye(n_delta), 1*eye(n_delta);...
             sec_2*eye(n_delta),-1*eye(n_delta)];
     GI=B_in*ss(A_G,B_G,[C_G;zeros(n_delta,nx)],[D_G;eye(n_delta)]);
-    PSI_GI=[psi,zeros((1+n_psi)*nu,nu);zeros((1+n_psi)*nu,nu),psi]*GI;
+    PSI_GI=[psi_alpha,zeros((1+n_psi)*nu,nu);zeros((1+n_psi)*nu,nu),psi_alpha]*GI;
     
     % Run the exponenetial analysis LMI
-    [status,P]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi,psi_b_til,alpha,odd_flag,causal_flag,cond_tol,tol);
+    [status,P]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi_alpha,psi_b_til,alpha,odd_flag,causal_flag,cond_tol,tol);
     
 end
-function [status,X]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi,psi_b_til,alpha,odd_flag,causal_flag,cond_tol,tol)
+function [status,X]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi_alpha,psi_b_til,alpha,odd_flag,causal_flag,cond_tol,tol)
  % This function runs the exp-stab analysis KYP Lemma LMI
     status=false;
     % Get state-space matrices and dimensions
     [A,B,C,D]=ssdata(PSI_GI);
-    [Av,Bv,~,~]=ssdata(minreal(psi));
+    [Av_alpha,Bv_alpha,~,~]=ssdata(minreal(psi_alpha));
+    
+    Av=Av_alpha+2*alpha*eye(size(Av_alpha,1));
+    Bv=Bv_alpha;
     
     [n,nu]=size(B);
     n_psi=size(Av,1);

@@ -18,9 +18,9 @@ function [alpha_best,P_ret]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx
         case 6
             rho=-1;
             psi_order=1;
-            odd_flag=1;
+            odd_flag=0;
             causal_flag=0; % 1: causal, -1:anti-causal, 0:non-causal
-            [status,P]=verify_exp_stab_ZF_basis(G_veh,alpha_lims(1),m,L,odd_flag,causal_flag,rho,psi_order,cond_tol,cvx_tol);
+            [status,P_ret]=verify_exp_stab_ZF_basis(G_veh,alpha_lims(1),m,L,odd_flag,causal_flag,rho,psi_order,cond_tol,cvx_tol);
 
     end
 

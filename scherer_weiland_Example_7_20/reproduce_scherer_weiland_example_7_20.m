@@ -6,7 +6,7 @@ clear
 clc
 addpath('..\analysis_scripts')
 save_data=1;
-save_path='.\data_odd_phi\';
+save_path='.\data_non_odd_phi_alpha\';
 %% Setup optimization
 % Example from Scherer, Weiland LMI notes (not a vehicle)
 a=0.4:0.2:1.8;
@@ -18,7 +18,7 @@ L=0.1:0.01:5;  % Upper bound on the sector
 n_L=length(L);
 
 % Optimization properties
-cvx_tol=1e-6;
+cvx_tol=1e-3;
 bisect_tol=1e-2;
 cond_tol=100000000;
 
