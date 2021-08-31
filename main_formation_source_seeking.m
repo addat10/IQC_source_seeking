@@ -18,7 +18,8 @@ switch(Veh_mod)
         addpath(genpath('.\vehicles\quadrotor'))
         dim=2;% spatial dimension (of positions and velocities)
         % Current implementation only supports dim=2 for quadrotors
-        G_veh=define_G_quad_wrapped(dim);        
+        kp=0.5;kd=3;
+        G_veh=define_G_quad_wrapped(dim,kp,kd);        
 end
 %% Network Properties
 n=5; % Number of agents

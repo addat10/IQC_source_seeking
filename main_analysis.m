@@ -19,17 +19,19 @@ switch(Veh_mod)
         addpath(genpath('.\vehicles\quadrotor'))
         dim=2;% spatial dimension (of positions and velocities)
         % Current implementation only supports dim=2 for quadrotors
-        G_veh=define_G_quad_wrapped(dim);  
+        kp=0.5;kd=3;
+        G_veh=define_G_quad_wrapped(dim,kp,kd);  
     case 3
         % Example from Scherer, Weiland LMI notes (not a vehicle)
-        a=1.8; % Choose between 0.2 to 2          
+        a=1; % Choose between 0.2 to 2          
         G_veh=ss(tf([1,-a,0],[1,1,2,1]));
+        dim=1;
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
 m=1;
-L=3;
-cvx_tol=1e-6;
+L=5;
+cvx_tol=1e-3;
 bisect_tol=1e-2;
 alpha_lims=[1e-6,10]; 
 cond_tol=100000000;
@@ -39,7 +41,7 @@ cond_tol=100000000;
 % 1. Circle criterion
 % 2. Full block circle criterion
 % 3. Zames Falb multipliers
-multiplier_flag=2;
+multiplier_flag=3;
 [alpha_best,P]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
 %alpha_best=0;
 %[status,P]=verify_exp_stab_ZF(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
