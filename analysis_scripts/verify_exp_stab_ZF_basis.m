@@ -91,12 +91,12 @@ function [status,X]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi_alpha,psi_b_ti
 
     L1=[A'*X + X*A + 2*alpha*X,    X*B;
         B'*X,                      zeros(nu)];
-    L2=[C';D']*[zeros(n_psi+nu),kron(eye(nu),P_12);kron(eye(nu),P_12'),zeros(n_psi+nu)]*[C,D];
+    L2=[C';D']*[zeros(n_psi+nu),kron(P_12,eye(nu));kron(P_12',eye(nu)),zeros(n_psi+nu)]*[C,D];
 
     LMI=L1+L2;
     
     if n_psi_ch>=2
-        MAT=[eye(n_psi_til),    zeros(n_psi_til,nu);...
+        MAT=[eye(n_psi_til),    zeros(n_psi_til,1);...
             Av_til,             Bv_til;...
             Rv*Cv_til,          Rv*Dv_til];
         
@@ -119,55 +119,64 @@ function [status,X]=verify_exp_stab_alpha_ZF_basis_LMI(PSI_GI,psi_alpha,psi_b_ti
     
     % Norm constraint
     if n_psi_ch>=1        
-        kron(eye(nu),P0) + (P1+P2+P3+P4)*inv(Av)*Bv >=tol*eye(nu);
+        kron(eye(nu),P0) + kron((P1+P2+P3+P4),eye(nu))*inv(Av)*Bv >=tol*eye(nu);
     elseif n_psi_ch==0
         kron(eye(nu),P0)>=tol*eye(nu);
     end
     
-%     % Norm constraint
-%     kron(eye(nu),P0) + (P1+P2+P3+P4)*inv(Av)*Bv >=tol*eye(nu);
-    
-    % Impose these constraints if uncertainty phi is not odd
-    if odd_flag==0
-        P2==zeros(1,n_psi_ch);
-        P4==zeros(1,n_psi_ch);
-    end
-    
-
-    % Positivity constraint
-    if n_psi_ch>=2
-        X1>=tol*eye(n_psi_til)
-        pos_Lemma(X1,P1)>=tol*eye(n_psi_til+nu);
-        
-        X3>=tol*eye(n_psi_til)
-        pos_Lemma(X3,P3)>=tol*eye(n_psi_til+nu);
-        
-        if odd_flag==1
+    % Positivity constraint for the two cases of odd and non-odd uncertainty 
+    % Case 1: If the uncertainty is odd
+    if odd_flag==1 
+        if n_psi_ch==1
+            pos_Lemma(P1)>=tol*eye(n_psi_ch);
+            pos_Lemma(P3)>=tol*eye(n_psi_ch);
+            pos_Lemma(P2)>=tol*eye(n_psi);
+            pos_Lemma(P4)>=tol*eye(n_psi);
+        elseif n_psi_ch>=2
+            X1>=tol*eye(n_psi_til)
+            pos_Lemma(X1,P1)>=tol*eye(n_psi_til+nu);
+            X3>=tol*eye(n_psi_til)
+            pos_Lemma(X3,P3)>=tol*eye(n_psi_til+nu);
             X2>=tol*eye(n_psi_til)
             pos_Lemma(X2,P2)>=tol*eye(n_psi_til+nu);
             X4>=tol*eye(n_psi_til)
             pos_Lemma(X4,P4)>=tol*eye(n_psi_til+nu);
         end
-
-        
-    elseif n_psi_ch==1        
-        pos_Lemma(P1)>=tol*eye(n_psi_ch);
-        pos_Lemma(P3)>=tol*eye(n_psi_ch);
-        if odd_flag==1
-            pos_Lemma(P2)>=tol*eye(n_psi);
-            pos_Lemma(P4)>=tol*eye(n_psi);
+        if causal_flag==1
+        % Impose these constraints if only searching for causal multipliers
+            P1==P2;
+        end
+        if causal_flag==-1
+        % Impose these constraints if only searching for anti-causal multipliers
+            P3==P4;
         end
     end
+    %  Case 2: if the uncertainty is not odd
+    if odd_flag==0        
+        if causal_flag==1
+            P2==zeros(1,n_psi_ch);
+            P4==zeros(1,n_psi_ch);
+            P1==P2;
+            if n_psi_ch==1               
+                pos_Lemma(P3)>=tol*eye(n_psi_ch);            
+            elseif n_psi_ch>=2                
+                X3>=tol*eye(n_psi_til)
+                pos_Lemma(X3,P3)>=tol*eye(n_psi_til+nu);            
+            end            
+        end
+        if causal_flag==-1            
+            P2==zeros(1,n_psi_ch);
+            P4==zeros(1,n_psi_ch);
+            P3==P4;
+            if n_psi_ch==1               
+                pos_Lemma(P1)>=tol*eye(n_psi_ch);            
+            elseif n_psi_ch>=2                
+                X1>=tol*eye(n_psi_til)
+                pos_Lemma(X1,P1)>=tol*eye(n_psi_til+nu);            
+            end            
+        end        
+    end  
     
-    
-    if causal_flag==1
-        % Impose these constraints if only searching for causal multipliers
-        P1==P2;
-    end
-    if causal_flag==-1
-        % Impose these constraints if only searching for anti-causal multipliers
-        P3==P4;
-    end
     
     cvx_end 
     if strcmp('Solved',cvx_status)
