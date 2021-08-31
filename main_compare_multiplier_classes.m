@@ -5,26 +5,27 @@ clc
 % Select a Vehicle model from the following choices
 % 1. Mass with friction
 % 2. Linearized Quadrotor
-Veh_mod=2;
+Veh_mod=1;
 switch(Veh_mod)
     case 1
         % Mass with friction dynamics
         addpath(genpath('.\vehicles\mass_with_friction'))
         c_damp=1;mass=1;step_size=1;
-        dim=2;% spatial dimension (of positions and velocities)
+        dim=1;% spatial dimension (of positions and velocities)
         G_veh=define_G_mass_with_friction_wrapped(dim,c_damp,mass,step_size);
     case 2
         % Quadrotor dynamics
         addpath(genpath('.\vehicles\quadrotor'))
         dim=2;% spatial dimension (of positions and velocities)
         % Current implementation only supports dim=2 for quadrotors
-        G_veh=define_G_quad_wrapped(dim);        
+        kp=0.5;kd=3;
+        G_veh=define_G_quad_wrapped(dim,kp,kd);        
 end
 %% Verify exponential stability: Analysis
 addpath('.\analysis_scripts')
 m=1;
-L=2;
-cvx_tol=1e-6;
+L=5;
+cvx_tol=1e-3;
 bisect_tol=1e-2;
 alpha_lims=[0.01,10]; 
 cond_tol=100;
@@ -43,13 +44,19 @@ multiplier_flag=1;
 alpha_best=max(alpha_best,alpha_best_CC);
 [status_CC,P_CC]=verify_exp_stab_CC(G_veh,alpha_best,m,L,cond_tol,cvx_tol);
 
-if dim==2
+if dim>=2
     % With full block circle criterion
     multiplier_flag=2;
     %[alpha_best_FBCC,~]=bisection_exponent_FBCC(G_veh,m,L,cond_tol,alpha_lims,cvx_tol,bisect_tol);
     [alpha_best_FBCC,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
     [status_FBCC,P_FBCC]=verify_exp_stab_FBCC(G_veh,alpha_best_FBCC,m,L,cond_tol,cvx_tol);
     alpha_best=max(alpha_best,alpha_best_FBCC);
+        
+    % With Zames Falb Multiplier augmented with FBCC
+    multiplier_flag=4;
+    [alpha_best_ZF_FBCC,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+    [status_ZF_FBCC,P_ZF_FBCC]=verify_exp_stab_ZF_FBCC(G_veh,alpha_best_ZF_FBCC,m,L,cond_tol,cvx_tol);
+    alpha_best=max(alpha_best,alpha_best_ZF_FBCC);
 end
 
 % With Zames Falb Multiplier augmented with CC
@@ -57,11 +64,11 @@ multiplier_flag=3;
 [alpha_best_ZF,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
 [status_ZF,P_ZF]=verify_exp_stab_ZF(G_veh,alpha_best_ZF,m,L,cond_tol,cvx_tol);
 
-% With Zames Falb Multiplier augmented with FBCC
-multiplier_flag=4;
-[alpha_best_ZF_FBCC,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
-[status_ZF_FBCC,P_ZF_FBCC]=verify_exp_stab_ZF_FBCC(G_veh,alpha_best_ZF_FBCC,m,L,cond_tol,cvx_tol);
-alpha_best=max(alpha_best,alpha_best_ZF_FBCC);
+% With Zames Falb Multiplier
+multiplier_flag=6;
+[alpha_best_ZFb,~]=bisection_exponent(G_veh,m,L,alpha_lims,cond_tol,cvx_tol,bisect_tol,multiplier_flag);
+[status_ZFb,P_ZFb]=verify_exp_stab_ZF(G_veh,alpha_best_ZF,m,L,cond_tol,cvx_tol);
+
 %% Numerically simulate the dynamics
 % Define the underlying field for dim=2
 range=10;
@@ -96,9 +103,12 @@ end
 x_eqm=trajs.x(:,end);
 time=dt*(1:time_steps);
 e_ub_CC=exp(-alpha_best_CC*time)*cond(P_CC)*norm(x_ic-x_eqm)^2;
-e_ub_FBCC=exp(-alpha_best_FBCC*time)*cond(P_FBCC)*norm(x_ic-x_eqm)^2;
+if dim>=2
+    e_ub_FBCC=exp(-alpha_best_FBCC*time)*cond(P_FBCC)*norm(x_ic-x_eqm)^2;
+    e_ub_ZF_FBCC=exp(-alpha_best_ZF_FBCC*time)*cond(P_ZF_FBCC)*norm(x_ic-x_eqm)^2;
+end
 e_ub_ZF=exp(-alpha_best_ZF*time)*cond(P_ZF)*norm(x_ic-x_eqm)^2;
-e_ub_ZF_FBCC=exp(-alpha_best_ZF_FBCC*time)*cond(P_ZF_FBCC)*norm(x_ic-x_eqm)^2;
+e_ub_ZFb=exp(-alpha_best_ZFb*time)*cond(P_ZFb)*norm(x_ic-x_eqm)^2;
 %% Asymptotic Lyapunov Exponent for known quadratic fields
 % Compute the known theoretical lower and upper bounds
 switch(dim)
@@ -141,12 +151,15 @@ figure()
 plot(time,e_norms)
 hold on
 plot(time,e_ub_CC)
-plot(time,e_ub_FBCC)
 plot(time,e_ub_ZF)
-plot(time,e_ub_ZF_FBCC)
-
-
-legend('e norm','CC','FBCC','ZF','ZF_FBCC')
+plot(time,e_ub_ZFb)
+if dim>=2
+    plot(time,e_ub_FBCC)
+    plot(time,e_ub_ZF_FBCC)
+    legend('e norm','CC','ZF','ZFb','FBCC','ZF_FBCC')
+else
+    legend('e norm','CC','ZF','ZFb')
+end
 xlabel('time')
 ylabel('pos error')
 
@@ -155,13 +168,22 @@ figure()
 plot(time,log(e_norms))
 hold on
 plot(time,log(e_ub_CC))
-plot(time,log(e_ub_FBCC))
 plot(time,log(e_ub_ZF))
-plot(time,log(e_ub_ZF_FBCC))
+plot(time,log(e_ub_ZFb))
+if dim>=2
+    plot(time,log(e_ub_FBCC))
+    plot(time,log(e_ub_ZF_FBCC))  
+else
+    legend('e norm','CC','ZF','ZFb')
+end
 plot(time,log(e_lb_eig_lr))
 plot(time,log(e_ub_eig_sym_A))
 ylim([-50,50])
-legend('e norm','CC','FBCC','ZF','ZF FBCC','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
+if dim>=2
+    legend('e norm','CC','ZF','ZFb','FBCC','ZF FBCC','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
+else
+    legend('e norm','CC','ZF','ZFb','lb:2*Re(lambda max (A))','ub:eig(sym(A)')
+end
 xlabel('time')
 ylabel('ln(pos error)')
 
