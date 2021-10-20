@@ -11,7 +11,7 @@ link_prob=0.8;
 topo='rand';
 A=gen_topology(n,link_prob,topo);
 D=A*ones(n,1);
-L=2*(diag(D)-A);
+L=(diag(D)-A);
 Q=zeros(size(L));Q(1,1)=1;
 eig_L=eig(L);
 %% Compute the eigen values for grounded Laplacians with varying perturbations
